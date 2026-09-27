@@ -1,6 +1,6 @@
 # 一鸣 (Yiming) 真鲜奶吧 集成 for Home Assistant
 
-将「一鸣真鲜奶吧」微信小程序的账户数据接入 Home Assistant。基于小程序抓包逆向，使用 `token` 鉴权头（明文，非 Bearer）。
+将「一鸣真鲜奶吧」微信小程序的账户数据接入 Home Assistant。支持**手机号短信验证码登录（默认）**与 Token 登录，API 基于小程序抓包逆向实现。
 
 ## 功能特性
 
@@ -20,7 +20,7 @@
 
 ## 配置
 
-添加集成后，输入从小程序抓包得到的 `token` 即可。`token` 为明文请求头，长期有效（实测跨会话可用）。也支持手机号 + 短信验证码登录（自动获取 token）。
+添加集成后，默认使用「手机号 + 短信验证码」登录，系统将自动获取长期有效的 token。登录成功后，可在「重配置」中选择「输入 Token」方式直接填入抓包得到的 token（明文，非 Bearer）。
 
 ## 选项（集成设置）
 
@@ -54,7 +54,9 @@
 | `nearest_store` | 最近门店 | Nearest Store |
 | `payment_qrcode` | 付款二维码 | Payment QR Code |
 
-多账户时实体 ID 后缀递增（`_2`、`_3` …）。
+> **说明**：付款二维码传感器为确保有效性，加入 HA 后立即生成一次，并以 **60 秒** 为周期自动刷新。
+
+多账户时，每个账户独立创建设备与实体，互不干扰。
 
 ## 服务
 
@@ -85,14 +87,15 @@
 
 当「可领优惠券」数量变化时自动领取：
 
+> 💡 实体 ID 因 HA 语言/命名规则而异，请在 HA「开发者工具 → 状态」中搜索 `claimable_coupons` 查看实际实体 ID。
+
 ```yaml
 automation:
   - alias: 一鸣自动领券
     trigger:
       - platform: state
         entity_id:
-          - sensor.yi_ming_zhang_hu_ke_ling_you_hui_quan
-          - sensor.yi_ming_zhang_hu_ke_ling_you_hui_quan_2
+          - sensor.yi_ming_claimable_coupons
     action:
       - service: yiming.receive_all_coupons
 ```
